@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/kris/C++/Hardcoded self-destruction/build",
+  "command": "/bin/clang++-8   -I../headers  -g   -std=gnu++2a -o CMakeFiles/Hardcoded.dir/source/main.cpp.o -c \"/home/kris/C++/Hardcoded self-destruction/source/main.cpp\"",
+  "file": "/home/kris/C++/Hardcoded self-destruction/source/main.cpp"
+}
+]
