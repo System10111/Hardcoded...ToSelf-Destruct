@@ -37,7 +37,8 @@ struct Animator
         auto err = dvLoadImage(g,&spriteSheet,sheetFile.c_str(),0);
         if(err) {dvExit(g);return;}
 
-        FILE* af = fopen(animationFile.c_str(),"r");
+        FILE* af = 0;
+        fopen_s(&af,animationFile.c_str(),"r");
         if(af == NULL)
         {
             {dvExit(g);return;}
@@ -143,9 +144,10 @@ struct Animator
         struct {
             DvVector2 S0,S1,S2,S3;
         } res;
-        res.S0 = {(float)frames[(int)time].x,(float)frames[(int)time].y};
-        res.S1 = {res.S0.x + frames[(int)time].w,res.S0.y};
-        res.S2 = {res.S1.x,res.S1.y + frames[(int)time].h};
+        auto t = time >=  frames.size() ? frames.size()-1 : (int)time;
+        res.S0 = {(float)frames[t].x,(float)frames[t].y};
+        res.S1 = {res.S0.x + frames[t].w,res.S0.y};
+        res.S2 = {res.S1.x,res.S1.y + frames[t].h};
         res.S3 = {res.S0.x,res.S2.y};
         return res;
     }

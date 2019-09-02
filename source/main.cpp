@@ -8,6 +8,14 @@
 #include "Animator.hpp"
 #include "TextScroller.hpp"
 
+//
+#include <chrono>
+#include <cstring>
+#include <thread>
+#include <regex>
+#include <array>
+//
+
 /*--------------------------------*/
 /*-----------CONSTANTS------------*/
 /*--------------------------------*/
@@ -121,6 +129,7 @@ TextScroller introScroller;
 DvVector2 relMousePos(DvGame g)
 {
     auto mousePos = dvMousePos(g);
+    if(g->apis.windowAPI == DV_WAPI_WINDOWS) mousePos.y += 40;
     auto& winSize = g->properties.windowSize;
     mousePos.x -= (winSize.x - FB_WIDTH*(winSize.y/FB_HEIGHT))/2;
     mousePos.x *= (FB_HEIGHT/winSize.y);
@@ -166,13 +175,16 @@ void changeGameState(GameState state)
 /*--------------MAIN--------------*/
 /*--------------------------------*/
 int main() {
-    DV_ERR( dvDynamicLoad() );
+    #ifdef _WIN32
+    atexit([](){system("pause");});
+    #endif
+    DV_PRERR( dvDynamicLoad() );
 
     DvGame g;
-    DV_ERR( dvCreateEngine(&g) );
+    DV_PRERR( dvCreateEngine(&g) );
 
     g->Initialize = [](DvGame g){
-        strcpy(g->properties.windowName,"Hardcoded... To Self-Destruct");
+        strcpy_s(g->properties.windowName,"Hardcoded... To Self-Destruct");
         g->properties.windowSize = {FB_WIDTH,FB_HEIGHT};
         return 0;
     };
@@ -347,8 +359,10 @@ int main() {
         return 0;
     };
 
-    DV_ERR( dvRunGame(g) );
-    DV_ERR( dvCleanGame(&g) );
+    DV_PRERR( dvRunGame(g) );
+    DV_PRERR( dvCleanGame(&g) );
 
-    DV_ERR( dvDynamicUnload() );
+    DV_PRERR( dvDynamicUnload() );
+
+    return 0;
 }
