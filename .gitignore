@@ -1,0 +1,47 @@
+# VScode precompiled headers
+ipch/
+#build directory
+build/
+#VS android compile directory
+ARM/
+#VS project files
+*vcxproj*
+
+#old files
+oldinternalHeaders/
+oldsource/
+
+.vs/
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
