@@ -1,3 +1,4 @@
+#pragma once
 #include <divergence/Framework.h>
 #include <string>
 #include <vector>

@@ -7,6 +7,7 @@
 
 #include "Animator.hpp"
 #include "TextScroller.hpp"
+#include "Player.hpp"
 
 //
 #include <chrono>
@@ -19,6 +20,7 @@
 /*--------------------------------*/
 /*-----------CONSTANTS------------*/
 /*--------------------------------*/
+constexpr bool showColiders = true;
 constexpr int FB_WIDTH = 640;
 constexpr int FB_HEIGHT = 480;
 
@@ -117,11 +119,13 @@ MenuButton infoButton;
 MenuButton exitButton;
 DvImage title_screen;
 DvImage footer;
-//---------INFO-----------
+//----------INFO----------
 DvImage info_screen;
 MenuButton infoBackButton;
-//--------INTRO-----------
+//----------INTRO---------
 TextScroller introScroller;
+//---------INGAME---------
+std::vector<Player> players;
 
 /*--------------------------------*/
 /*-----FUNCTIONS DEFINITIONS------*/
@@ -184,7 +188,13 @@ int main() {
     DV_PRERR( dvCreateEngine(&g) );
 
     g->Initialize = [](DvGame g){
-        strcpy_s(g->properties.windowName,"Hardcoded... To Self-Destruct");
+        constexpr auto winName = "Hardcoded... To Self-Destruct";
+        #ifdef __STDC_LIB_EXT1__
+        strcpy_s(g->properties.windowName,winName);
+        #else
+        strcpy(g->properties.windowName,winName);
+        #endif
+        
         g->properties.windowSize = {FB_WIDTH,FB_HEIGHT};
         return 0;
     };
@@ -259,6 +269,13 @@ int main() {
         introScroller.lines.push_back(TextScroller::Line{{2,113},   {156+1,117+1},230,245});
         introScroller.lines.push_back(TextScroller::Line{{108,31},  {153+1,54 +1},255,255});
 
+        Player::baseAnimator = Animator(g,"resources/player.png","resources/player.json");
+        Player::baseAnimator.speed = 0.85;
+        Player::baseDigits = Animator(g,"resources/digits.png","resources/digits.json");
+        players.push_back(Player(g,{100,100},{2,2},DV_COLOR_WHITE,true));
+
+        coliders.push_back({{50,200},{300,250}});
+
         return 0;
     };
 
@@ -301,6 +318,13 @@ int main() {
                 }
             }
         }break;
+
+        case GameState::InGame:{
+            for(auto& p : players)
+            {
+                p.update(deltaT);
+            }
+        }break;
         
         default: break;
         }
@@ -330,6 +354,19 @@ int main() {
         }break;
         case GameState::Intro:{
             introScroller.draw();
+        }break;
+        case GameState::InGame:{
+            for(auto& p : players)
+            {
+                p.draw();
+            }
+            if constexpr(showColiders)
+            {
+                for(auto& c : coliders)
+                {
+                    c.draw(g,whitePixel,DV_COLOR_RED);
+                }
+            }
         }break;
 
 

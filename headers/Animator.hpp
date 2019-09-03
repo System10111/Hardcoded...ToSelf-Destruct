@@ -1,3 +1,4 @@
+#pragma once
 #include <divergence/Framework.h>
 #include <string>
 #include <vector>
@@ -38,7 +39,11 @@ struct Animator
         if(err) {dvExit(g);return;}
 
         FILE* af = 0;
+        #ifdef __STDC_LIB_EXT1__
         fopen_s(&af,animationFile.c_str(),"r");
+        #else
+        af = fopen(animationFile.c_str(),"rb");
+        #endif
         if(af == NULL)
         {
             {dvExit(g);return;}
@@ -118,10 +123,10 @@ struct Animator
 
     void update(double deltaT)
     {
-        if((int)time > animations[curAnimation].to)
+        if((int)time >= animations[curAnimation].to)
         {
             if(!loop) return;
-            time = animations[curAnimation].from;
+            time -= animations[curAnimation].to - animations[curAnimation].from;
         }
         time += deltaT * speed * 10;
     }
@@ -132,6 +137,19 @@ struct Animator
         if(anIt == animations.end()) return;
         curAnimation = std::distance(animations.begin(), anIt);
         time = anIt->from;
+    }
+    void setAnimationIfNot(const char* anim)
+    {
+        auto anIt = std::find_if(animations.begin(),animations.end(),[&](auto& an){return an.name == anim;});
+        if(anIt == animations.end()) return;
+        if(curAnimation == std::distance(animations.begin(), anIt)) return;
+        curAnimation = std::distance(animations.begin(), anIt);
+        time = anIt->from;
+    }
+
+    bool ended()
+    {
+        return time >= animations[curAnimation].to;
     }
 
     std::string getAnimation()
