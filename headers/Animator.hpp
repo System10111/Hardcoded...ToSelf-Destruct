@@ -121,6 +121,15 @@ struct Animator
         } while(loc != std::string::npos);
     }
 
+    Animator(DvGame&g, std::string sheetFile)
+    {
+        game = g;
+        auto err = dvLoadImage(g,&spriteSheet,sheetFile.c_str(),0);
+        if(err) {dvExit(g);return;}
+        frames.push_back(Frame{0,0,(int)spriteSheet->size.x,(int)spriteSheet->size.y});
+        animations.push_back(Animation{"default",0,0});
+    }
+
     void update(double deltaT)
     {
         if((int)time >= animations[curAnimation].to)
@@ -152,6 +161,11 @@ struct Animator
         return time >= animations[curAnimation].to;
     }
 
+    void end()
+    {
+        time = animations[curAnimation].to;
+    }
+
     std::string getAnimation()
     {
         return animations[curAnimation].name;
@@ -162,6 +176,7 @@ struct Animator
         struct {
             DvVector2 S0,S1,S2,S3;
         } res;
+        if(animations.size() == 0 || frames.size() == 0) return res;
         auto t = time >=  frames.size() ? frames.size()-1 : (int)time;
         res.S0 = {(float)frames[t].x,(float)frames[t].y};
         res.S1 = {res.S0.x + frames[t].w,res.S0.y};

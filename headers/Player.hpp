@@ -21,18 +21,22 @@ constexpr DV_KK LEFT_KEY = DV_KK_LEFT;
 constexpr DV_KK RIGHT_KEY = DV_KK_RIGHT;
 constexpr DV_KK LEFT_KEY2 = DV_KK_A;
 constexpr DV_KK RIGHT_KEY2 = DV_KK_D;
+constexpr DV_KK EXPLODE_KEY = DV_KK_F;
+constexpr DV_KK LEAVE_KEY = DV_KK_E;
 
 struct Player
 {
     DvGame game;
     DvVector2 pos;
     DvVector2 vel = {0,0};
+    DvVector2 defaultDrag = {8,0.1};
+    DvVector2 flungDrag = {1,0.1};
     DvVector2 drag = {8,0.1};
     float gravity = 600;
     float jumpStr = 200;
     float speed = 150;
-    DvVector2 hBoxStart = {9,6};
-    DvVector2 hBoxEnd = DvVector2{23,28};
+    DvVector2 hBoxStart = {12,6};
+    DvVector2 hBoxEnd = DvVector2{20,28};
     DvVector2 scale = {1,1};
     DvColor color;
     bool controlled;
@@ -45,8 +49,11 @@ struct Player
     bool turnedLeft = false;
     float timeTillExplode = 15;
     bool exploded = false;
+    bool countdown = true;
+    bool visible = true;
 
     float timeSinceJump = 0;
+    float timeSinceClick = 5;
 
     Player(){};
     Player(DvGame g,DvVector2 _pos,DvVector2 _scale,DvColor _col = DV_COLOR_WHITE,bool _controlled = false)
@@ -138,14 +145,15 @@ struct Player
     int update(double deltaT)
     {
         // printf("vel-y:%f ,tsj:%f\n",vel.y,timeSinceJump);
+        timeSinceClick += deltaT;
         if(timeTillExplode > 0)
         {
+            if(countdown)
             timeTillExplode -= deltaT;
         } else {
             if(!exploded) explode();
         }
         timeSinceJump += deltaT;
-        pos = pos + vel * deltaT;
         vel.x -= vel.x*drag.x * deltaT;
         vel.y -= vel.y*drag.y * deltaT;
 
@@ -170,8 +178,17 @@ struct Player
         //-------------
         if(controlled)
         {
-            if(landed && dvKeyboardKeyClicked(game,JUMP_KEY))
+            if(dvKeyboardKeyClicked(game,LEAVE_KEY))
             {
+                controlled = false;
+            }
+            if(dvKeyboardKeyClicked(game,JUMP_KEY))
+            {
+                timeSinceClick = 0;
+            }
+            if(landed && timeSinceClick < 0.15)
+            {
+                timeSinceClick = 99;
                 timeSinceJump = 0;
                 vel.y -= jumpStr;
                 animator.setAnimation("jump");
@@ -186,7 +203,7 @@ struct Player
                     animator.loop = true;
                 }
                 turnedLeft = false;
-                vel.x = speed;
+                vel.x = std::max(speed,vel.x);
             }
             if(dvKeyboardKeyDown(game,LEFT_KEY) || dvKeyboardKeyDown(game,LEFT_KEY2))
             {
@@ -196,13 +213,17 @@ struct Player
                     animator.loop = true;
                 }
                 turnedLeft = true;
-                vel.x = -speed;
+                vel.x = std::min(-speed,vel.x);
             }
-            if(std::abs(vel.x) < 5 && landed && animator.getAnimation() != "land")
+            if(dvKeyboardKeyClicked(game,EXPLODE_KEY))
             {
-                animator.setAnimationIfNot("stand");
-                animator.loop = true;
+                timeTillExplode = 0;
             }
+        }
+        if(!exploded && std::abs(vel.x) < 5 && landed && animator.getAnimation() != "land")
+        {
+            animator.setAnimationIfNot("stand");
+            animator.loop = true;
         }
         //-------------
         //-ANIMATIONS--
@@ -234,7 +255,7 @@ struct Player
                 colidedY = true;
                 if(vel.y > 0)
                 {
-                    landed = true;
+                    land();
                     if(vel.y > 20 && !exploded)
                     {
                         animator.setAnimationIfNot("land");
@@ -251,7 +272,7 @@ struct Player
                 colidedY = true;
                 if(vel.y > 0)
                 {
-                    landed = true;
+                    land();
                     if(vel.y > 20 && !exploded)
                     {
                         animator.setAnimationIfNot("land");
@@ -264,13 +285,41 @@ struct Player
             }
         }
         if(!colidedY && vel.y > 0) landed = false;
+        pos = pos + vel * deltaT;
 
         animator.update(deltaT);
         return 0;
     }
 
+    void land()
+    {
+        landed = true;
+        if(drag.x == flungDrag.x && drag.y == flungDrag.y)
+        {
+            drag = defaultDrag;
+        }
+    }
+
     void explode()
     {
+        if(!landed){
+            drag.x *= 0.3;
+            vel.x *= 1.5;
+        }
+        extern std::vector<Player> players;
+        for(auto& p : players)
+        {
+            if(&p == this) continue;
+            if(p.exploded) continue;
+            if(!p.landed) p.drag = p.flungDrag;
+            DvVector2 vec = p.pos - pos;
+            float dist = std::sqrt(vec.x*vec.x + vec.y*vec.y);
+            vec = vec * (1/dist);
+            vec.x *= 2;
+            dist = std::max(dist,50.0f);
+            if(dist > 150) dist = 1000;
+            p.vel = vec * ((15000/dist) + std::sqrt(p.vel.x*p.vel.x + p.vel.y*p.vel.y) );
+        }
         exploded = true;
         controlled = false;
         animator.setAnimationIfNot("self-destruct");
@@ -281,3 +330,5 @@ struct Player
 
 Animator Player::baseAnimator;
 Animator Player::baseDigits;
+
+std::vector<Player> players;
