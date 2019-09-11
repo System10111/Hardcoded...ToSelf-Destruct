@@ -39,11 +39,7 @@ struct Animator
         if(err) {dvExit(g);return;}
 
         FILE* af = 0;
-        #ifdef __STDC_LIB_EXT1__
-        fopen_s(&af,animationFile.c_str(),"r");
-        #else
         af = fopen(animationFile.c_str(),"rb");
-        #endif
         if(af == NULL)
         {
             {dvExit(g);return;}

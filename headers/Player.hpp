@@ -1,5 +1,6 @@
 #pragma once
 #include <divergence/Framework.h>
+#include <cmath>
 #include "Animator.hpp"
 #include "Colider.hpp"
 
@@ -157,10 +158,6 @@ struct Player
         vel.x -= vel.x*drag.x * deltaT;
         vel.y -= vel.y*drag.y * deltaT;
 
-        constexpr auto dMin = [](auto l,auto r)
-        {
-            return l < r ? l : r;
-        };
         constexpr auto dMax = [](auto l,auto r)
         {
             return l > r ? l : r;
@@ -203,7 +200,7 @@ struct Player
                     animator.loop = true;
                 }
                 turnedLeft = false;
-                vel.x = std::max(speed,vel.x);
+                vel.x = std::fmax(speed,vel.x);
             }
             if(dvKeyboardKeyDown(game,LEFT_KEY) || dvKeyboardKeyDown(game,LEFT_KEY2))
             {
@@ -213,7 +210,7 @@ struct Player
                     animator.loop = true;
                 }
                 turnedLeft = true;
-                vel.x = std::min(-speed,vel.x);
+                vel.x = std::fmin(-speed,vel.x);
             }
             if(dvKeyboardKeyClicked(game,EXPLODE_KEY))
             {
@@ -316,7 +313,7 @@ struct Player
             float dist = std::sqrt(vec.x*vec.x + vec.y*vec.y);
             vec = vec * (1/dist);
             vec.x *= 2;
-            dist = std::max(dist,50.0f);
+            dist = std::fmax(dist,50.0f);
             if(dist > 150) dist = 1000;
             p.vel = vec * ((15000/dist) + std::sqrt(p.vel.x*p.vel.x + p.vel.y*p.vel.y) );
         }

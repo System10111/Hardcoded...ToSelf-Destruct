@@ -13,6 +13,9 @@
 #include "Player.hpp"
 #include "Level.hpp"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
 /*--------------------------------*/
 /*-----------CONSTANTS------------*/
 /*--------------------------------*/
@@ -158,7 +161,6 @@ Level levelEnd;
 DvVector2 relMousePos(DvGame g)
 {
     auto mousePos = dvMousePos(g);
-    if(g->apis.windowAPI == DV_WAPI_WINDOWS) mousePos.y += 40;
     auto& winSize = g->properties.windowSize;
     mousePos.x -= (winSize.x - FB_WIDTH*(winSize.y/FB_HEIGHT))/2;
     mousePos.x *= (FB_HEIGHT/winSize.y);
@@ -298,9 +300,17 @@ void gameButtonUpdate(GameObject& go,double deltaT)
 /*--------------------------------*/
 /*--------------MAIN--------------*/
 /*--------------------------------*/
-int main() {
+#ifdef _WIN32
+int APIENTRY WinMain(HINSTANCE hInstance,
+  	                      HINSTANCE hPrevInstance,
+ 	                      LPSTR     lpCmdLine,
+ 	                      int       nCmdShow)
+#else
+int main()
+#endif 
+{
     #ifdef _WIN32
-    atexit([](){system("pause");});
+    // atexit([](){system("pause");});
     #endif
     DV_PRERR( dvDynamicLoad() );
 
@@ -312,11 +322,7 @@ int main() {
 
     g->Initialize = [](DvGame g){
         constexpr auto winName = "Hardcoded... To Self-Destruct";
-        #ifdef __STDC_LIB_EXT1__
-        strcpy_s(g->properties.windowName,winName);
-        #else
         strcpy(g->properties.windowName,winName);
-        #endif
         
         g->properties.windowSize = {FB_WIDTH,FB_HEIGHT};
         return 0;
@@ -850,7 +856,7 @@ int main() {
 
     g->Update = [](DvGame g,double deltaT)
     {
-        if(dvKeyboardKeyDown(g,DV_KK_Q))
+        if(debugMode && dvKeyboardKeyDown(g,DV_KK_Q))
         {
             DV_ERR( dvExit(g) );
         }
@@ -1153,6 +1159,12 @@ int main() {
             ) 
         );
         // dvDraw(g,testImg,relMousePos(g),{1,1},DV_COLOR_WHITE);
+        return 0;
+    };
+
+    g->Close = [](DvGame g)
+    {
+        DV_ERR( dvExit(g) );
         return 0;
     };
 
